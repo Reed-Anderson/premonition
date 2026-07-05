@@ -46,3 +46,7 @@ Use the Explorer's "Outer Comments" view to navigate between these comments by l
 Follow this convention for block comments instead of ad-hoc styles.
 
 In other comments, /**/ styles are preferred over //.
+
+Every file should open with an `outercomment` block immediately below its imports, labeling the section that follows (e.g. `Auth Routes`, `Config`). If a file has no imports, the block goes at the top instead.
+
+Apps may extend these conventions for their own file types — see `apps/api/CLAUDE.md` for Express-specific comment conventions.
