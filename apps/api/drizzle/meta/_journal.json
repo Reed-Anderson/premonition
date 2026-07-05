@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783107310056,
+      "tag": "0000_melodic_whiplash",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783108127448,
+      "tag": "0001_little_sentinels",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783108450255,
+      "tag": "0002_panoramic_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783110861539,
+      "tag": "0003_cooing_centennial",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783190217690,
+      "tag": "0004_hesitant_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783205403623,
+      "tag": "0005_chubby_deadpool",
+      "breakpoints": true
+    }
+  ]
+}

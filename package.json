@@ -1,0 +1,29 @@
+{
+    "name": "premonition",
+    "version": "0.1.0",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "concurrently -n types,web,api -c yellow,blue,green \"npm run dev --workspace=@premonition/types\" \"npm run dev:web\" \"npm run dev:api\"",
+        "dev:web": "npm run dev --workspace=web",
+        "dev:api": "npm run dev --workspace=api",
+        "dev:test": "concurrently -n types,web,api -c yellow,blue,green \"npm run dev --workspace=@premonition/types\" \"npm run dev:web:test\" \"npm run dev:api:test\"",
+        "dev:web:test": "npm run dev:test --workspace=web",
+        "dev:api:test": "npm run dev:test --workspace=api",
+        "build": "npm run build --workspace=@premonition/types && npm run build --workspace=web && npm run build --workspace=api",
+        "lint": "npm run lint --workspace=web && npm run lint --workspace=api",
+        "typecheck": "npm run typecheck --workspace=@premonition/types && npm run typecheck --workspace=api",
+        "test": "npm run test --workspace=web",
+        "test:watch": "npm run test:watch --workspace=web",
+        "format": "biome format --write .",
+        "format:check": "biome format ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.0",
+        "concurrently": "^8.2.2",
+        "cross-env": "^10.1.0"
+    }
+}
