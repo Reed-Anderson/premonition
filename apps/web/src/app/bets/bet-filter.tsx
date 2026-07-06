@@ -7,21 +7,20 @@ import type { BetStatus } from "./bet-list-item"
  *
  ******************************************************************************/
 
-export default function BetFilter({
-    selected,
-    onSelect,
-}: {
+type BetFilterProps = {
     selected: BetFilterValue
     onSelect: (value: BetFilterValue) => void
-}) {
+}
+
+export default function BetFilter(props: BetFilterProps) {
     return (
         <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
             {FILTERS.map((filter) => (
                 <BetFilterItem
                     key={filter.value}
                     label={filter.label}
-                    isSelected={filter.value === selected}
-                    onSelect={() => onSelect(filter.value)}
+                    isSelected={filter.value === props.selected}
+                    onSelect={() => props.onSelect(filter.value)}
                 />
             ))}
         </ul>

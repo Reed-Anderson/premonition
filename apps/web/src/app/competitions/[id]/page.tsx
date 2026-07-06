@@ -32,7 +32,7 @@ export default function CompetitionDetailsPage() {
     const [error, setError] = useState<string | null>(null)
 
     /***************************************************************************
-     * Data Fetching
+     * Effects
      **************************************************************************/
 
     useEffect(() => {
@@ -54,6 +54,10 @@ export default function CompetitionDetailsPage() {
             })
             .finally(() => setLoading(false))
     }, [id])
+
+    /***************************************************************************
+     * Render Variables
+     **************************************************************************/
 
     const weeks = groupGamesByWeek(games)
     const selectedWeekGames =

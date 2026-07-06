@@ -8,15 +8,14 @@ import type { IconType } from "react-icons"
  *
  ******************************************************************************/
 
-export default function SportIcon({
-    sport,
-    className,
-}: {
+type SportIconProps = {
     sport: Sport
     className?: string
-}) {
-    const Icon = SPORT_ICONS[sport]
-    return <Icon className={className} />
+}
+
+export default function SportIcon(props: SportIconProps) {
+    const Icon = SPORT_ICONS[props.sport]
+    return <Icon className={props.className} />
 }
 
 const SPORT_ICONS: Record<Sport, IconType> = {

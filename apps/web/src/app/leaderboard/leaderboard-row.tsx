@@ -4,28 +4,32 @@
  *
  ******************************************************************************/
 
-export default function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+type LeaderboardRowProps = {
+    entry: LeaderboardEntry
+}
+
+export default function LeaderboardRow(props: LeaderboardRowProps) {
     return (
         <li
             className={`flex items-center gap-4 rounded-lg border p-4 ${
-                entry.isCurrentUser
+                props.entry.isCurrentUser
                     ? "border-primary-300 bg-primary-50 dark:border-primary-800 dark:bg-primary-950/40"
                     : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
             }`}
         >
             <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${rankBadgeClassName(entry.rank)}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${rankBadgeClassName(props.entry.rank)}`}
             >
-                {entry.rank}
+                {props.entry.rank}
             </span>
 
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-semibold text-white dark:bg-primary-500 dark:text-black">
-                {initialsFor(entry.name)}
+                {initialsFor(props.entry.name)}
             </span>
 
             <p className="min-w-0 grow truncate font-medium text-black dark:text-zinc-50">
-                {entry.name}
-                {entry.isCurrentUser && (
+                {props.entry.name}
+                {props.entry.isCurrentUser && (
                     <span className="ml-2 text-xs font-normal text-primary-700 dark:text-primary-300">
                         (You)
                     </span>
@@ -33,7 +37,7 @@ export default function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
             </p>
 
             <p className="shrink-0 text-right font-semibold text-black dark:text-zinc-50">
-                {entry.credits.toLocaleString()}{" "}
+                {props.entry.credits.toLocaleString()}{" "}
                 <span className="font-normal text-zinc-500 dark:text-zinc-400">
                     credits
                 </span>

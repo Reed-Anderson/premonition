@@ -10,17 +10,17 @@ import GameBetForm from "./game-bet-form"
  *
  ******************************************************************************/
 
-export default function GameListItem({
-    game,
-    initialBet,
-    hasJoined,
-}: {
+type GameListItemProps = {
     game: Game
     initialBet?: Bet
     hasJoined: boolean
-}) {
+}
+
+export default function GameListItem(props: GameListItemProps) {
     const [isExpanded, setIsExpanded] = useState(false)
-    const [placedBet, setPlacedBet] = useState<Bet | null>(initialBet ?? null)
+    const [placedBet, setPlacedBet] = useState<Bet | null>(
+        props.initialBet ?? null,
+    )
 
     return (
         <li className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -32,11 +32,11 @@ export default function GameListItem({
             >
                 <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-black dark:text-zinc-50">
-                        {game.homeTeam}{" "}
+                        {props.game.homeTeam}{" "}
                         <span className="text-zinc-400 dark:text-zinc-600">
                             vs
                         </span>{" "}
-                        {game.awayTeam}
+                        {props.game.awayTeam}
                     </p>
                     {placedBet && (
                         <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-950 dark:text-primary-300">
@@ -46,7 +46,7 @@ export default function GameListItem({
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {formatKickoff(game.kickoff)}
+                        {formatKickoff(props.game.kickoff)}
                     </p>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -69,9 +69,9 @@ export default function GameListItem({
                 <div className="overflow-hidden">
                     <div className="px-4 pb-4">
                         <GameBetForm
-                            game={game}
-                            initialBet={initialBet}
-                            hasJoined={hasJoined}
+                            game={props.game}
+                            initialBet={props.initialBet}
+                            hasJoined={props.hasJoined}
                             onPlaceBet={setPlacedBet}
                         />
                     </div>

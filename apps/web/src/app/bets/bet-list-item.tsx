@@ -4,41 +4,45 @@
  *
  ******************************************************************************/
 
-export default function BetListItem({ bet }: { bet: Bet }) {
+type BetListItemProps = {
+    bet: Bet
+}
+
+export default function BetListItem(props: BetListItemProps) {
     return (
         <li className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-black dark:text-zinc-50">
-                        {bet.homeTeam}{" "}
+                        {props.bet.homeTeam}{" "}
                         <span className="text-zinc-400 dark:text-zinc-600">
                             vs
                         </span>{" "}
-                        {bet.awayTeam}
+                        {props.bet.awayTeam}
                     </p>
                     <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS_NAMES[bet.status]}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS_NAMES[props.bet.status]}`}
                     >
-                        {STATUS_LABELS[bet.status]}
+                        {STATUS_LABELS[props.bet.status]}
                     </span>
                 </div>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    {bet.competitionName} &middot; picked{" "}
+                    {props.bet.competitionName} &middot; picked{" "}
                     <span className="text-zinc-700 dark:text-zinc-300">
-                        {bet.pickedTeam}
+                        {props.bet.pickedTeam}
                     </span>{" "}
-                    &middot; {formatKickoff(bet.kickoff)}
+                    &middot; {formatKickoff(props.bet.kickoff)}
                 </p>
             </div>
 
             <div className="shrink-0 text-right">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {bet.wager.toLocaleString()} credits wagered
+                    {props.bet.wager.toLocaleString()} credits wagered
                 </p>
                 <p
-                    className={`font-semibold ${RETURN_CLASS_NAMES[bet.status]}`}
+                    className={`font-semibold ${RETURN_CLASS_NAMES[props.bet.status]}`}
                 >
-                    {returnLabelFor(bet)}
+                    {returnLabelFor(props.bet)}
                 </p>
             </div>
         </li>

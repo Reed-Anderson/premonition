@@ -19,33 +19,42 @@ import OutcomeOption from "./outcome-option"
  *
  ******************************************************************************/
 
-export default function GameBetForm({
-    game,
-    initialBet,
-    hasJoined,
-    onPlaceBet,
-}: {
+type GameBetFormProps = {
     game: Game
     initialBet?: Bet
     hasJoined: boolean
     onPlaceBet: (bet: Bet) => void
-}) {
+}
+
+export default function GameBetForm(props: GameBetFormProps) {
+    /***************************************************************************
+     * State
+     **************************************************************************/
+
     const [outcome, setOutcome] = useState<BetOutcome | null>(
-        initialBet?.outcome ?? null,
+        props.initialBet?.outcome ?? null,
     )
     const [wager, setWager] = useState(
-        initialBet ? String(initialBet.wager) : "",
+        props.initialBet ? String(props.initialBet.wager) : "",
     )
-    const [hasPlacedBet, setHasPlacedBet] = useState(initialBet != null)
+    const [hasPlacedBet, setHasPlacedBet] = useState(props.initialBet != null)
     const [isPlacing, setIsPlacing] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [volume, setVolume] = useState<BetVolume | null>(null)
 
+    /***************************************************************************
+     * Effects
+     **************************************************************************/
+
     useEffect(() => {
-        fetchBetVolume(game.id)
+        fetchBetVolume(props.game.id)
             .then(setVolume)
             .catch(() => { })
-    }, [game.id])
+    }, [props.game.id])
+
+    /***************************************************************************
+     * Render Variables
+     **************************************************************************/
 
     const wagerAmount = Number(wager)
     const homeMultiplier = volume ? estimateMultiplier(volume, "home") : null
@@ -65,17 +74,23 @@ export default function GameBetForm({
             ? wagerAmount * previewMultiplier
             : null
 
+    /***************************************************************************
+     * Callbacks
+     **************************************************************************/
+
     async function handlePlaceBet() {
-        if (!outcome || wagerAmount <= 0) return
+        if (!outcome || wagerAmount <= 0) {
+            return
+        }
         setIsPlacing(true)
         setError(null)
         try {
-            const bet = await placeBet(game.id, outcome, wagerAmount)
+            const bet = await placeBet(props.game.id, outcome, wagerAmount)
             setHasPlacedBet(true)
             setVolume((v) =>
                 v ? { ...v, [outcome]: v[outcome] + wagerAmount } : v,
             )
-            onPlaceBet(bet)
+            props.onPlaceBet(bet)
         } catch (err) {
             if (err instanceof UnauthorizedError) {
                 window.location.href = googleSignInUrl()
@@ -92,7 +107,11 @@ export default function GameBetForm({
         }
     }
 
-    if (!hasJoined) {
+    /***************************************************************************
+     * Short Circuits
+     **************************************************************************/
+
+    if (!props.hasJoined) {
         return (
             <p className="border-t border-zinc-200 pt-3 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                 <Link
@@ -106,18 +125,22 @@ export default function GameBetForm({
         )
     }
 
+    /***************************************************************************
+     * Render
+     **************************************************************************/
+
     return (
         <div className="flex flex-col gap-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
             <div className="flex gap-2">
                 <OutcomeOption
-                    label={game.homeTeam}
+                    label={props.game.homeTeam}
                     multiplier={homeMultiplier}
                     isSelected={outcome === "home"}
                     disabled={hasPlacedBet || isPlacing}
                     onSelect={() => setOutcome("home")}
                 />
                 <OutcomeOption
-                    label={game.awayTeam}
+                    label={props.game.awayTeam}
                     multiplier={awayMultiplier}
                     isSelected={outcome === "away"}
                     disabled={hasPlacedBet || isPlacing}
@@ -128,8 +151,8 @@ export default function GameBetForm({
             {volume && (
                 <BetVolumeBar
                     volume={volume}
-                    homeTeam={game.homeTeam}
-                    awayTeam={game.awayTeam}
+                    homeTeam={props.game.homeTeam}
+                    awayTeam={props.game.awayTeam}
                 />
             )}
 

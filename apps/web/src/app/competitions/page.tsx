@@ -22,7 +22,7 @@ export default function CompetitionsPage() {
     const [error, setError] = useState<string | null>(null)
 
     /***************************************************************************
-     * Data Fetching
+     * Effects
      **************************************************************************/
 
     useEffect(() => {
@@ -36,6 +36,10 @@ export default function CompetitionsPage() {
             })
             .finally(() => setLoading(false))
     }, [])
+
+    /***************************************************************************
+     * Render Variables
+     **************************************************************************/
 
     const myCompetitions = competitions.filter(
         (competition) =>

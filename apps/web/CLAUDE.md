@@ -18,6 +18,8 @@ all the other stuff
 
 - Every component gets its own file.
 - If you're mapping an array into JSX, and that JSX requires more than three lines, extract it into its own component (in its own file).
+- A component's body can contain up to seven kinds of sections: State, Effects, Memos, Callbacks, Render Variables, Short Circuits, Render. If a component has 3 or more of these present, label each present one with an `innercomment` (see root CLAUDE.md's Comment Conventions), placed immediately above the section it labels, in whatever order the sections already appear in the code — this labels existing structure, it doesn't require reordering a component's internals to match the list above.
+- Don't destructure props inline in the function signature. Define a `<ComponentName>Props` type (e.g. `GameBetFormProps`) above the component, take a single `props` parameter typed with it, and access fields as `props.field` throughout the body. This keeps props visually distinct from locals defined inside the component.
 
 # Icons
 

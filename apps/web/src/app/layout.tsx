@@ -18,11 +18,11 @@ export const metadata: Metadata = {
     description: "Predict outcomes. Wager credits. Win the pool.",
 }
 
-export default function RootLayout({
-    children,
-}: Readonly<{
+type RootLayoutProps = Readonly<{
     children: React.ReactNode
-}>) {
+}>
+
+export default function RootLayout(props: RootLayoutProps) {
     return (
         <html
             lang="en"
@@ -30,7 +30,7 @@ export default function RootLayout({
         >
             <body className="min-h-full flex flex-col">
                 <Navbar />
-                {children}
+                {props.children}
             </body>
         </html>
     )

@@ -16,15 +16,13 @@ import { formatDate } from "@/lib/dates"
 
 export type CompetitionStatus = "open" | "joined" | "ended"
 
-export default function CompetitionListItem({
-    competition,
-    status,
-    isPopular = false,
-}: {
+type CompetitionListItemProps = {
     competition: Competition
     status: CompetitionStatus
     isPopular?: boolean
-}) {
+}
+
+export default function CompetitionListItem(props: CompetitionListItemProps) {
     /***************************************************************************
      * State
      **************************************************************************/
@@ -34,14 +32,14 @@ export default function CompetitionListItem({
     const [error, setError] = useState<string | null>(null)
 
     /***************************************************************************
-     * Handlers
+     * Callbacks
      **************************************************************************/
 
     async function handleJoin() {
         setJoining(true)
         setError(null)
         try {
-            await joinCompetition(competition.id)
+            await joinCompetition(props.competition.id)
             setJustJoined(true)
         } catch (err) {
             if (err instanceof UnauthorizedError) {
@@ -62,33 +60,33 @@ export default function CompetitionListItem({
         <li className="flex flex-col gap-6 rounded-xl border border-zinc-200 bg-white p-7 transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950">
             <div className="flex items-start justify-between gap-4">
                 <Link
-                    href={`/competitions/${competition.id}`}
+                    href={`/competitions/${props.competition.id}`}
                     className="flex min-w-0 items-center gap-4"
                 >
                     <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-950">
                         <SportIcon
-                            sport={competition.sport}
+                            sport={props.competition.sport}
                             className="h-9 w-9 text-primary-600 dark:text-primary-400"
                         />
                     </span>
                     <div className="min-w-0">
                         <p className="text-lg font-medium text-black dark:text-zinc-50">
-                            {competition.name}
+                            {props.competition.name}
                         </p>
                         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                            {formatDate(competition.startDate)} –{" "}
-                            {formatDate(competition.endDate)}
+                            {formatDate(props.competition.startDate)} –{" "}
+                            {formatDate(props.competition.endDate)}
                         </p>
                     </div>
                 </Link>
-                {isPopular && (
+                {(props.isPopular ?? false) && (
                     <span className="shrink-0 rounded-full bg-secondary-100 px-2 py-0.5 text-xs font-medium text-secondary-800 dark:bg-secondary-950 dark:text-secondary-300">
                         Popular
                     </span>
                 )}
             </div>
 
-            {status === "open" && (
+            {props.status === "open" && (
                 <button
                     type="button"
                     onClick={handleJoin}
@@ -99,13 +97,13 @@ export default function CompetitionListItem({
                 </button>
             )}
 
-            {status === "joined" && (
+            {props.status === "joined" && (
                 <span className="mt-auto w-full rounded-md bg-primary-50 px-4 py-2.5 text-center text-sm font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                     Joined
                 </span>
             )}
 
-            {status === "ended" && (
+            {props.status === "ended" && (
                 <span className="mt-auto w-full rounded-md bg-zinc-100 px-4 py-2.5 text-center text-sm font-medium text-zinc-500 dark:bg-zinc-900 dark:text-zinc-500">
                     Competition ended
                 </span>

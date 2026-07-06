@@ -9,15 +9,20 @@ import { usePathname } from "next/navigation"
  *
  ******************************************************************************/
 
-export default function NavLinkItem({
-    link,
-    variant,
-}: {
+export type NavLink = {
+    href: string
+    label: string
+    activePaths?: string[]
+}
+
+type NavLinkItemProps = {
     link: NavLink
     variant: "desktop" | "mobile"
-}) {
+}
+
+export default function NavLinkItem(props: NavLinkItemProps) {
     const pathname = usePathname()
-    const activePaths = link.activePaths ?? [link.href]
+    const activePaths = props.link.activePaths ?? [props.link.href]
     const isActive = activePaths.some(
         (path) => pathname === path || pathname.startsWith(`${path}/`),
     )
@@ -25,20 +30,14 @@ export default function NavLinkItem({
     return (
         <li>
             <Link
-                href={link.href}
+                href={props.link.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`${VARIANT_CLASS_NAMES[variant]} ${isActive ? ACTIVE_VARIANT_CLASS_NAMES[variant] : ""}`}
+                className={`${VARIANT_CLASS_NAMES[props.variant]} ${isActive ? ACTIVE_VARIANT_CLASS_NAMES[props.variant] : ""}`}
             >
-                {link.label}
+                {props.link.label}
             </Link>
         </li>
     )
-}
-
-export type NavLink = {
-    href: string
-    label: string
-    activePaths?: string[]
 }
 
 const VARIANT_CLASS_NAMES: Record<"desktop" | "mobile", string> = {

@@ -6,23 +6,21 @@ import WeekSelectorItem from "./week-selector-item"
  *
  ******************************************************************************/
 
-export default function WeekSelector({
-    weeks,
-    selectedWeek,
-    onSelectWeek,
-}: {
+type WeekSelectorProps = {
     weeks: number[]
     selectedWeek: number
     onSelectWeek: (week: number) => void
-}) {
+}
+
+export default function WeekSelector(props: WeekSelectorProps) {
     return (
         <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
-            {weeks.map((week) => (
+            {props.weeks.map((week) => (
                 <WeekSelectorItem
                     key={week}
                     week={week}
-                    isSelected={week === selectedWeek}
-                    onSelect={() => onSelectWeek(week)}
+                    isSelected={week === props.selectedWeek}
+                    onSelect={() => props.onSelectWeek(week)}
                 />
             ))}
         </ul>

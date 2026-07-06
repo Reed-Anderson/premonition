@@ -7,17 +7,15 @@ import { getBetVolumeShare } from "@premonition/types"
  *
  ******************************************************************************/
 
-export default function BetVolumeBar({
-    volume,
-    homeTeam,
-    awayTeam,
-}: {
+type BetVolumeBarProps = {
     volume: BetVolume
     homeTeam: string
     awayTeam: string
-}) {
-    const total = volume.home + volume.away
-    const share = getBetVolumeShare(volume)
+}
+
+export default function BetVolumeBar(props: BetVolumeBarProps) {
+    const total = props.volume.home + props.volume.away
+    const share = getBetVolumeShare(props.volume)
     const homePercent = Math.round(share.home * 100)
     const awayPercent = total > 0 ? 100 - homePercent : 0
 
@@ -28,7 +26,7 @@ export default function BetVolumeBar({
                 role="img"
                 aria-label={
                     total > 0
-                        ? `Betting volume: ${homePercent}% on ${homeTeam}, ${awayPercent}% on ${awayTeam}`
+                        ? `Betting volume: ${homePercent}% on ${props.homeTeam}, ${awayPercent}% on ${props.awayTeam}`
                         : "No bets placed yet"
                 }
             >
@@ -36,11 +34,11 @@ export default function BetVolumeBar({
                     <>
                         <div
                             className="h-full bg-primary-600 transition-[flex-grow] duration-500 ease-out dark:bg-primary-500"
-                            style={{ flexGrow: volume.home }}
+                            style={{ flexGrow: props.volume.home }}
                         />
                         <div
                             className="h-full bg-secondary-600 transition-[flex-grow] duration-500 ease-out"
-                            style={{ flexGrow: volume.away }}
+                            style={{ flexGrow: props.volume.away }}
                         />
                     </>
                 )}
@@ -49,10 +47,12 @@ export default function BetVolumeBar({
             {total > 0 ? (
                 <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
                     <span>
-                        {volume.home.toLocaleString()} credits on {homeTeam}
+                        {props.volume.home.toLocaleString()} credits on{" "}
+                        {props.homeTeam}
                     </span>
                     <span>
-                        {volume.away.toLocaleString()} credits on {awayTeam}
+                        {props.volume.away.toLocaleString()} credits on{" "}
+                        {props.awayTeam}
                     </span>
                 </div>
             ) : (

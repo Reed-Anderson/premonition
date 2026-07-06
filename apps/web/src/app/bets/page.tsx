@@ -17,6 +17,10 @@ export default function MyBetsPage() {
 
     const [filter, setFilter] = useState<BetFilterValue>("all")
 
+    /***************************************************************************
+     * Render Variables
+     **************************************************************************/
+
     const bets =
         filter === "all" ? BETS : BETS.filter((bet) => bet.status === filter)
 
