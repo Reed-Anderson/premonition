@@ -1,7 +1,7 @@
 "use client"
 
 import type { Bet, Competition, Game } from "@premonition/types"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import SportIcon from "@/components/icons/sport-icon"
 import { fetchMyBets } from "@/lib/bets"
@@ -24,6 +24,8 @@ export default function CompetitionDetailsPage() {
      **************************************************************************/
 
     const { id } = useParams<{ id: string }>()
+    const searchParams = useSearchParams()
+    const highlightedGameId = searchParams.get("game")
     const [competition, setCompetition] = useState<Competition | null>(null)
     const [games, setGames] = useState<Game[]>([])
     const [hasJoined, setHasJoined] = useState(false)
@@ -48,13 +50,20 @@ export default function CompetitionDetailsPage() {
                 setGames(games)
                 setHasJoined(myCompetitionIds.includes(id))
                 setBets(bets)
-                setSelectedWeek(groupGamesByWeek(games).at(0)?.week ?? null)
+                const highlightedGame = games.find(
+                    (game) => game.id === highlightedGameId,
+                )
+                setSelectedWeek(
+                    highlightedGame?.week ??
+                        groupGamesByWeek(games).at(0)?.week ??
+                        null,
+                )
             })
             .catch(() => {
                 setError("Couldn't load this competition. Please try again.")
             })
             .finally(() => setLoading(false))
-    }, [id])
+    }, [id, highlightedGameId])
 
     /***************************************************************************
      * Render Variables
@@ -121,6 +130,7 @@ export default function CompetitionDetailsPage() {
                                             sport={competition.sport}
                                             initialBet={betsByGameId.get(game.id)}
                                             hasJoined={hasJoined}
+                                            highlighted={game.id === highlightedGameId}
                                         />
                                     ))}
                                 </ul>

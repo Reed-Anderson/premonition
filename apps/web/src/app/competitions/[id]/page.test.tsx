@@ -1,7 +1,7 @@
 import type { Bet, Competition, Game } from "@premonition/types"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fetchMyBets } from "@/lib/bets"
 import { fetchCompetition, fetchMyCompetitionIds } from "@/lib/competitions"
@@ -16,6 +16,7 @@ import CompetitionDetailsPage from "./page"
 
 vi.mock("next/navigation", () => ({
     useParams: vi.fn(),
+    useSearchParams: vi.fn(),
 }))
 
 vi.mock("@/lib/competitions", () => ({
@@ -67,6 +68,9 @@ const bet: Bet = {
 
 beforeEach(() => {
     vi.mocked(useParams).mockReturnValue({ id: "c1" })
+    vi.mocked(useSearchParams).mockReturnValue(
+        new URLSearchParams() as ReturnType<typeof useSearchParams>,
+    )
 })
 
 describe("CompetitionDetailsPage", () => {
@@ -94,7 +98,7 @@ describe("CompetitionDetailsPage", () => {
                 screen.getByRole("button", { name: /Chiefs.*Ravens/ }),
             ).toBeInTheDocument()
         })
-        expect(screen.getByText("Bet: Chiefs")).toBeInTheDocument()
+        expect(screen.getByText("100 credits")).toBeInTheDocument()
     })
 
     it("shows a bettable game as unlocked when the user has no bet yet", async () => {
@@ -110,7 +114,38 @@ describe("CompetitionDetailsPage", () => {
                 screen.getByRole("button", { name: /Chiefs.*Ravens/ }),
             ).toBeInTheDocument()
         })
-        expect(screen.queryByText("Bet: Chiefs")).not.toBeInTheDocument()
+        expect(screen.queryByText("100 credits")).not.toBeInTheDocument()
+    })
+
+    it("jumps to the week of and expands the game named by the game query param", async () => {
+        const laterGame: Game = {
+            ...game,
+            id: "g2",
+            week: 2,
+            homeTeam: "49ers",
+            awayTeam: "Rams",
+        }
+        vi.mocked(useSearchParams).mockReturnValue(
+            new URLSearchParams({ game: "g2" }) as ReturnType<
+                typeof useSearchParams
+            >,
+        )
+        vi.mocked(fetchCompetition).mockResolvedValue(competition)
+        vi.mocked(fetchGames).mockResolvedValue([game, laterGame])
+        vi.mocked(fetchMyCompetitionIds).mockResolvedValue([competition.id])
+        vi.mocked(fetchMyBets).mockResolvedValue([])
+
+        render(<CompetitionDetailsPage />)
+
+        await waitFor(() => {
+            expect(
+                screen.getByRole("button", { name: /49ers.*Rams/ }),
+            ).toBeInTheDocument()
+        })
+        expect(screen.queryByText(/Chiefs/)).not.toBeInTheDocument()
+        expect(
+            screen.getByRole("button", { name: /49ers.*Rams/ }),
+        ).toHaveAttribute("aria-expanded", "true")
     })
 
     it("shows a join prompt instead of a bet form when the user hasn't joined", async () => {

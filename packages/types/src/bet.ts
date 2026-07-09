@@ -58,6 +58,8 @@ export type BetStatus = "pending" | "won" | "lost"
 /* A bet enriched with its game/competition context and a computed status + return, e.g. for a "my bets" list. */
 export type BetSummary = {
     id: string
+    gameId: string
+    competitionId: string
     competitionName: string
     homeTeam: string
     awayTeam: string

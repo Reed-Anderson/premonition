@@ -1,4 +1,5 @@
 import type { BetOutcome, BetStatus, BetSummary } from "@premonition/types"
+import Link from "next/link"
 
 /*******************************************************************************
  *
@@ -14,51 +15,56 @@ export default function BetListItem(props: BetListItemProps) {
     const pickedLabel = pickedLabelFor(props.bet)
 
     return (
-        <li className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-black dark:text-zinc-50">
-                        <span className={outcomeClassName(props.bet.outcome, "home")}>
-                            {props.bet.homeTeam}
-                        </span>{" "}
-                        <span className="text-zinc-400 dark:text-zinc-600">
-                            vs
-                        </span>{" "}
-                        <span className={outcomeClassName(props.bet.outcome, "away")}>
-                            {props.bet.awayTeam}
+        <li className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <Link
+                href={`/competitions/${props.bet.competitionId}?game=${props.bet.gameId}`}
+                className="flex items-center justify-between gap-4 p-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            >
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-black dark:text-zinc-50">
+                            <span className={outcomeClassName(props.bet.outcome, "home")}>
+                                {props.bet.homeTeam}
+                            </span>{" "}
+                            <span className="text-zinc-400 dark:text-zinc-600">
+                                vs
+                            </span>{" "}
+                            <span className={outcomeClassName(props.bet.outcome, "away")}>
+                                {props.bet.awayTeam}
+                            </span>
+                        </p>
+                        <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS_NAMES[props.bet.status]}`}
+                        >
+                            {STATUS_LABELS[props.bet.status]}
                         </span>
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                        {props.bet.competitionName} &middot; picked{" "}
+                        <span
+                            className={`font-medium ${
+                                props.bet.outcome === "tie"
+                                    ? "text-secondary-700 dark:text-secondary-400"
+                                    : "text-primary-700 dark:text-primary-400"
+                            }`}
+                        >
+                            {pickedLabel}
+                        </span>{" "}
+                        &middot; {formatKickoff(props.bet.kickoff)}
                     </p>
-                    <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS_NAMES[props.bet.status]}`}
-                    >
-                        {STATUS_LABELS[props.bet.status]}
-                    </span>
                 </div>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    {props.bet.competitionName} &middot; picked{" "}
-                    <span
-                        className={`font-medium ${
-                            props.bet.outcome === "tie"
-                                ? "text-secondary-700 dark:text-secondary-400"
-                                : "text-primary-700 dark:text-primary-400"
-                        }`}
-                    >
-                        {pickedLabel}
-                    </span>{" "}
-                    &middot; {formatKickoff(props.bet.kickoff)}
-                </p>
-            </div>
 
-            <div className="shrink-0 text-right">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {props.bet.wager.toLocaleString()} credits wagered
-                </p>
-                <p
-                    className={`font-semibold ${RETURN_CLASS_NAMES[props.bet.status]}`}
-                >
-                    {returnLabelFor(props.bet)}
-                </p>
-            </div>
+                <div className="shrink-0 text-right">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {props.bet.wager.toLocaleString()} credits wagered
+                    </p>
+                    <p
+                        className={`font-semibold ${RETURN_CLASS_NAMES[props.bet.status]}`}
+                    >
+                        {returnLabelFor(props.bet)}
+                    </p>
+                </div>
+            </Link>
         </li>
     )
 }

@@ -2,7 +2,12 @@ import type { Bet, Game } from "@premonition/types"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { BetAlreadyPlacedError, fetchBetVolume, placeBet } from "@/lib/bets"
+import {
+    BetAlreadyPlacedError,
+    cancelBet,
+    fetchBetVolume,
+    placeBet,
+} from "@/lib/bets"
 import GameBetForm from "./game-bet-form"
 
 /*******************************************************************************
@@ -16,6 +21,7 @@ vi.mock("@/lib/bets", async (importOriginal) => {
     return {
         ...actual,
         placeBet: vi.fn(),
+        cancelBet: vi.fn(),
         fetchBetVolume: vi.fn(),
         BetAlreadyPlacedError: class BetAlreadyPlacedError extends Error {},
     }
@@ -233,6 +239,82 @@ describe("GameBetForm", () => {
         expect(
             screen.getByRole("button", { name: "Bet Placed" }),
         ).toBeDisabled()
+    })
+
+    it("shows a Cancel Bet button once a bet is placed on a game that hasn't kicked off", async () => {
+        const user = userEvent.setup()
+        vi.mocked(placeBet).mockResolvedValue(placedBet)
+        render(<GameBetForm game={game} sport="FOOTBALL" hasJoined={true} onPlaceBet={() => {}} />)
+
+        await user.click(screen.getByRole("button", { name: /Chiefs/ }))
+        await user.type(screen.getByRole("textbox"), "100")
+        await user.click(placeBetButton())
+
+        expect(
+            await screen.findByRole("button", { name: "Cancel Bet" }),
+        ).toBeInTheDocument()
+    })
+
+    it("omits the Cancel Bet button once the game has kicked off", () => {
+        render(
+            <GameBetForm
+                game={{ ...game, kickoff: "2020-01-01T00:00:00Z" }}
+                sport="FOOTBALL"
+                hasJoined={true}
+                initialBet={placedBet}
+                onPlaceBet={() => {}}
+            />,
+        )
+
+        expect(
+            screen.queryByRole("button", { name: "Cancel Bet" }),
+        ).not.toBeInTheDocument()
+    })
+
+    it("cancels the bet and unlocks the form for a new pick", async () => {
+        const user = userEvent.setup()
+        vi.mocked(cancelBet).mockResolvedValue(undefined)
+        const onCancelBet = vi.fn()
+        render(
+            <GameBetForm
+                game={game}
+                sport="FOOTBALL"
+                hasJoined={true}
+                initialBet={placedBet}
+                onPlaceBet={() => {}}
+                onCancelBet={onCancelBet}
+            />,
+        )
+
+        await user.click(screen.getByRole("button", { name: "Cancel Bet" }))
+
+        expect(cancelBet).toHaveBeenCalledWith("g1")
+        expect(onCancelBet).toHaveBeenCalled()
+        expect(
+            await screen.findByRole("button", { name: "Place Bet" }),
+        ).toBeEnabled()
+        expect(screen.getByRole("textbox")).toBeEnabled()
+    })
+
+    it("shows an error when cancelling fails", async () => {
+        const user = userEvent.setup()
+        vi.mocked(cancelBet).mockRejectedValue(new Error("500"))
+        render(
+            <GameBetForm
+                game={game}
+                sport="FOOTBALL"
+                hasJoined={true}
+                initialBet={placedBet}
+                onPlaceBet={() => {}}
+            />,
+        )
+
+        await user.click(screen.getByRole("button", { name: "Cancel Bet" }))
+
+        expect(
+            await screen.findByText("Couldn't cancel your bet. Please try again."),
+        ).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Bet Placed" })).toBeDisabled()
     })
 
     it("offers a Tie option for a sport that allows ties", () => {

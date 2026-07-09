@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { UnauthorizedError } from "./auth"
 import {
     BetAlreadyPlacedError,
+    cancelBet,
     fetchAllMyBets,
     fetchBetVolume,
     fetchMyBets,
@@ -82,6 +83,8 @@ describe("fetchBetVolume", () => {
 describe("fetchAllMyBets", () => {
     const betSummary: BetSummary = {
         id: "b1",
+        gameId: "g1",
+        competitionId: "c1",
         competitionName: "FIFA World Cup",
         homeTeam: "Mexico",
         awayTeam: "South Korea",
@@ -162,5 +165,33 @@ describe("placeBet", () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }))
 
         await expect(placeBet("g1", "home", 100)).rejects.toThrow("500")
+    })
+})
+
+describe("cancelBet", () => {
+    it("sends a DELETE to the game's bets endpoint", async () => {
+        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }))
+
+        await cancelBet("g1")
+
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringMatching(/\/games\/g1\/bets$/),
+            expect.objectContaining({
+                method: "DELETE",
+                credentials: "include",
+            }),
+        )
+    })
+
+    it("throws UnauthorizedError when signed out", async () => {
+        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }))
+
+        await expect(cancelBet("g1")).rejects.toThrow(UnauthorizedError)
+    })
+
+    it("throws when the response is not ok", async () => {
+        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }))
+
+        await expect(cancelBet("g1")).rejects.toThrow("500")
     })
 })

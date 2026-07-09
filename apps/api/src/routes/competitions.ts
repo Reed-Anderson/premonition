@@ -185,6 +185,8 @@ competitionsRouter.get("/bets/mine", async (req, res) => {
 
         return {
             id: bet.id,
+            gameId: game.id,
+            competitionId: game.competitionId,
             competitionName,
             homeTeam: game.homeTeam,
             awayTeam: game.awayTeam,
@@ -366,4 +368,61 @@ competitionsRouter.post("/games/:id/bets", async (req, res) => {
     }
 
     res.status(201).json(bet)
+})
+
+/*******************************************************************************
+ *
+ * DELETE Routes
+ *
+ ******************************************************************************/
+
+/**
+ * Cancel the signed-in user's bet on a game, freeing them to place a new one.
+ *
+ * @route DELETE /games/:id/bets
+ * @param {string} id - game id (path)
+ * @returns {void} 204
+ * @returns {ApiError} 400 - game has already kicked off
+ * @returns {ApiError} 401 - not signed in
+ * @returns {ApiError} 404 - game not found, or no bet to cancel
+ */
+competitionsRouter.delete("/games/:id/bets", async (req, res) => {
+    /***************************************************************************
+     * Require the user to be signed in
+     **************************************************************************/
+    const user = await getSessionUser(req)
+    if (!user) {
+        res.status(401).json({ error: "Not signed in" })
+        return
+    }
+
+    /***************************************************************************
+     * Look up the game and confirm it hasn't kicked off yet
+     **************************************************************************/
+    const [game] = await db
+        .select()
+        .from(games)
+        .where(eq(games.id, req.params.id))
+    if (!game) {
+        res.status(404).json({ error: "Game not found" })
+        return
+    }
+    if (game.kickoff <= new Date()) {
+        res.status(400).json({ error: "This game has already kicked off" })
+        return
+    }
+
+    /***************************************************************************
+     * Delete the bet
+     **************************************************************************/
+    const [bet] = await db
+        .delete(bets)
+        .where(and(eq(bets.userId, user.id), eq(bets.gameId, game.id)))
+        .returning()
+    if (!bet) {
+        res.status(404).json({ error: "No bet to cancel" })
+        return
+    }
+
+    res.status(204).end()
 })

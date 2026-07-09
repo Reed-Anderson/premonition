@@ -19,6 +19,8 @@ vi.mock("@/lib/bets", async (importOriginal) => {
 const BETS: BetSummary[] = [
     {
         id: "bet-1",
+        gameId: "g1",
+        competitionId: "c1",
         competitionName: "2026 FIFA World Cup",
         homeTeam: "Mexico",
         awayTeam: "South Korea",
@@ -30,6 +32,8 @@ const BETS: BetSummary[] = [
     },
     {
         id: "bet-2",
+        gameId: "g2",
+        competitionId: "c1",
         competitionName: "2026 FIFA World Cup",
         homeTeam: "USA",
         awayTeam: "Wales",
@@ -41,6 +45,8 @@ const BETS: BetSummary[] = [
     },
     {
         id: "bet-3",
+        gameId: "g3",
+        competitionId: "c2",
         competitionName: "2026/27 NFL",
         homeTeam: "Kansas City Chiefs",
         awayTeam: "Buffalo Bills",
@@ -52,6 +58,8 @@ const BETS: BetSummary[] = [
     },
     {
         id: "bet-4",
+        gameId: "g4",
+        competitionId: "c3",
         competitionName: "2026/27 English Premier League",
         homeTeam: "Arsenal",
         awayTeam: "Manchester City",
@@ -63,6 +71,8 @@ const BETS: BetSummary[] = [
     },
     {
         id: "bet-5",
+        gameId: "g5",
+        competitionId: "c3",
         competitionName: "2026/27 English Premier League",
         homeTeam: "Liverpool",
         awayTeam: "Chelsea",

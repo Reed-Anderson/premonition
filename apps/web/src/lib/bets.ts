@@ -53,6 +53,20 @@ export async function fetchBetVolume(gameId: string): Promise<BetVolume> {
     return res.json()
 }
 
+/* Cancels the signed-in user's bet on a game, freeing them to place a new one. */
+export async function cancelBet(gameId: string): Promise<void> {
+    const res = await fetch(`${API_URL}/games/${gameId}/bets`, {
+        method: "DELETE",
+        credentials: "include",
+    })
+    if (res.status === 401) {
+        throw new UnauthorizedError()
+    }
+    if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`)
+    }
+}
+
 export async function placeBet(
     gameId: string,
     outcome: BetOutcome,

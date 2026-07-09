@@ -5,7 +5,12 @@ import { estimateMultiplier, sportAllowsTie } from "@premonition/types"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { googleSignInUrl, UnauthorizedError } from "@/lib/auth"
-import { BetAlreadyPlacedError, fetchBetVolume, placeBet } from "@/lib/bets"
+import {
+    BetAlreadyPlacedError,
+    cancelBet,
+    fetchBetVolume,
+    placeBet,
+} from "@/lib/bets"
 import BetVolumeBar from "./bet-volume-bar"
 import OutcomeOption from "./outcome-option"
 
@@ -21,6 +26,7 @@ type GameBetFormProps = {
     initialBet?: Bet
     hasJoined: boolean
     onPlaceBet: (bet: Bet) => void
+    onCancelBet?: () => void
 }
 
 export default function GameBetForm(props: GameBetFormProps) {
@@ -36,6 +42,7 @@ export default function GameBetForm(props: GameBetFormProps) {
     )
     const [hasPlacedBet, setHasPlacedBet] = useState(props.initialBet != null)
     const [isPlacing, setIsPlacing] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [volume, setVolume] = useState<BetVolume | null>(null)
 
@@ -73,6 +80,7 @@ export default function GameBetForm(props: GameBetFormProps) {
         previewMultiplier !== null && wagerAmount > 0
             ? wagerAmount * previewMultiplier
             : null
+    const hasKickedOff = new Date(props.game.kickoff) <= new Date()
 
     /***************************************************************************
      * Callbacks
@@ -104,6 +112,29 @@ export default function GameBetForm(props: GameBetFormProps) {
             }
         } finally {
             setIsPlacing(false)
+        }
+    }
+
+    async function handleCancelBet() {
+        setIsCancelling(true)
+        setError(null)
+        try {
+            await cancelBet(props.game.id)
+            setVolume((v) =>
+                v && outcome
+                    ? { ...v, [outcome]: Math.max(0, v[outcome] - wagerAmount) }
+                    : v,
+            )
+            setHasPlacedBet(false)
+            props.onCancelBet?.()
+        } catch (err) {
+            if (err instanceof UnauthorizedError) {
+                window.location.href = googleSignInUrl()
+                return
+            }
+            setError("Couldn't cancel your bet. Please try again.")
+        } finally {
+            setIsCancelling(false)
         }
     }
 
@@ -196,20 +227,32 @@ export default function GameBetForm(props: GameBetFormProps) {
                     </span>
                 )}
 
-                <button
-                    type="button"
-                    disabled={
-                        hasPlacedBet || isPlacing || !outcome || wagerAmount <= 0
-                    }
-                    onClick={handlePlaceBet}
-                    className={
-                        hasPlacedBet
-                            ? "ml-auto shrink-0 cursor-not-allowed rounded-md bg-primary-100 px-4 py-2 text-sm font-medium text-primary-800 dark:bg-primary-950 dark:text-primary-300"
-                            : "ml-auto shrink-0 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary-600 dark:bg-primary-500 dark:text-black dark:hover:bg-primary-400"
-                    }
-                >
-                    {hasPlacedBet ? "Bet Placed" : isPlacing ? "Placing..." : "Place Bet"}
-                </button>
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                    <button
+                        type="button"
+                        disabled={
+                            hasPlacedBet || isPlacing || !outcome || wagerAmount <= 0
+                        }
+                        onClick={handlePlaceBet}
+                        className={
+                            hasPlacedBet
+                                ? "cursor-not-allowed rounded-md bg-primary-100 px-4 py-2 text-sm font-medium text-primary-800 dark:bg-primary-950 dark:text-primary-300"
+                                : "rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary-600 dark:bg-primary-500 dark:text-black dark:hover:bg-primary-400"
+                        }
+                    >
+                        {hasPlacedBet ? "Bet Placed" : isPlacing ? "Placing..." : "Place Bet"}
+                    </button>
+                    {hasPlacedBet && !hasKickedOff && (
+                        <button
+                            type="button"
+                            disabled={isCancelling}
+                            onClick={handleCancelBet}
+                            className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                        >
+                            {isCancelling ? "Cancelling..." : "Cancel Bet"}
+                        </button>
+                    )}
+                </div>
             </div>
 
             {error && (

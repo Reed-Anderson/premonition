@@ -1,7 +1,7 @@
 "use client"
 
 import type { Bet, Game, Sport } from "@premonition/types"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import GameBetForm from "./game-bet-form"
 
 /*******************************************************************************
@@ -15,6 +15,7 @@ type GameListItemProps = {
     sport: Sport
     initialBet?: Bet
     hasJoined: boolean
+    highlighted?: boolean
 }
 
 export default function GameListItem(props: GameListItemProps) {
@@ -22,23 +23,40 @@ export default function GameListItem(props: GameListItemProps) {
      * State
      **************************************************************************/
 
-    const [isExpanded, setIsExpanded] = useState(false)
+    const [isExpanded, setIsExpanded] = useState(props.highlighted ?? false)
     const [placedBet, setPlacedBet] = useState<Bet | null>(
         props.initialBet ?? null,
     )
+    const [showHighlight, setShowHighlight] = useState(props.highlighted ?? false)
+    const itemRef = useRef<HTMLLIElement>(null)
 
     /***************************************************************************
-     * Render Variables
+     * Effects
      **************************************************************************/
 
-    const pickedLabel = placedBet && pickedLabelFor(placedBet, props.game)
+    useEffect(() => {
+        if (!props.highlighted) {
+            return
+        }
+        itemRef.current?.scrollIntoView({ block: "center", behavior: "smooth" })
+        setShowHighlight(true)
+        const timeout = setTimeout(() => setShowHighlight(false), 3000)
+        return () => clearTimeout(timeout)
+    }, [props.highlighted])
 
     /***************************************************************************
      * Render
      **************************************************************************/
 
     return (
-        <li className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <li
+            ref={itemRef}
+            className={`overflow-hidden rounded-lg border bg-white transition-colors duration-1000 dark:bg-zinc-950 ${
+                showHighlight
+                    ? "border-primary-400 ring-1 ring-primary-400 dark:border-primary-600 dark:ring-primary-600"
+                    : "border-zinc-200 dark:border-zinc-800"
+            }`}
+        >
             <button
                 type="button"
                 onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -57,9 +75,9 @@ export default function GameListItem(props: GameListItemProps) {
                             {props.game.awayTeam}
                         </span>
                     </p>
-                    {pickedLabel && (
+                    {placedBet && (
                         <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-950 dark:text-primary-300">
-                            Bet: {pickedLabel}
+                            {placedBet.wager.toLocaleString()} credits
                         </span>
                     )}
                 </div>
@@ -93,6 +111,7 @@ export default function GameListItem(props: GameListItemProps) {
                             initialBet={props.initialBet}
                             hasJoined={props.hasJoined}
                             onPlaceBet={setPlacedBet}
+                            onCancelBet={() => setPlacedBet(null)}
                         />
                     </div>
                 </div>
@@ -108,17 +127,6 @@ function formatKickoff(kickoff: string) {
         hour: "numeric",
         minute: "2-digit",
     })
-}
-
-function pickedLabelFor(bet: Bet, game: Game) {
-    switch (bet.outcome) {
-        case "home":
-            return game.homeTeam
-        case "away":
-            return game.awayTeam
-        case "tie":
-            return "Tie"
-    }
 }
 
 /* A tie pick highlights both teams in secondary color; a home/away pick highlights just that side in primary color. */
