@@ -1,15 +1,11 @@
 "use client"
 
-import type { Bet, BetOutcome, BetVolume, Game } from "@premonition/types"
+import type { Bet, BetOutcome, BetVolume, Game, Sport } from "@premonition/types"
+import { estimateMultiplier, sportAllowsTie } from "@premonition/types"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { googleSignInUrl, UnauthorizedError } from "@/lib/auth"
-import {
-    BetAlreadyPlacedError,
-    estimateMultiplier,
-    fetchBetVolume,
-    placeBet,
-} from "@/lib/bets"
+import { BetAlreadyPlacedError, fetchBetVolume, placeBet } from "@/lib/bets"
 import BetVolumeBar from "./bet-volume-bar"
 import OutcomeOption from "./outcome-option"
 
@@ -21,6 +17,7 @@ import OutcomeOption from "./outcome-option"
 
 type GameBetFormProps = {
     game: Game
+    sport: Sport
     initialBet?: Bet
     hasJoined: boolean
     onPlaceBet: (bet: Bet) => void
@@ -56,9 +53,12 @@ export default function GameBetForm(props: GameBetFormProps) {
      * Render Variables
      **************************************************************************/
 
+    const allowsTie = sportAllowsTie(props.sport)
     const wagerAmount = Number(wager)
     const homeMultiplier = volume ? estimateMultiplier(volume, "home") : null
     const awayMultiplier = volume ? estimateMultiplier(volume, "away") : null
+    const tieMultiplier =
+        volume && allowsTie ? estimateMultiplier(volume, "tie") : null
 
     /* Once placed, the fetched volume already includes this wager; before that, add it in so the preview reflects the pool as it will be. */
     const volumeAfterThisWager: BetVolume | null =
@@ -139,6 +139,15 @@ export default function GameBetForm(props: GameBetFormProps) {
                     disabled={hasPlacedBet || isPlacing}
                     onSelect={() => setOutcome("home")}
                 />
+                {allowsTie && (
+                    <OutcomeOption
+                        label="Tie"
+                        multiplier={tieMultiplier}
+                        isSelected={outcome === "tie"}
+                        disabled={hasPlacedBet || isPlacing}
+                        onSelect={() => setOutcome("tie")}
+                    />
+                )}
                 <OutcomeOption
                     label={props.game.awayTeam}
                     multiplier={awayMultiplier}
@@ -153,6 +162,7 @@ export default function GameBetForm(props: GameBetFormProps) {
                     volume={volume}
                     homeTeam={props.game.homeTeam}
                     awayTeam={props.game.awayTeam}
+                    allowsTie={allowsTie}
                 />
             )}
 

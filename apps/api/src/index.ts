@@ -6,6 +6,7 @@ import { PORT, WEB_URL } from "./config"
 import { authRouter } from "./routes/auth"
 import { competitionsRouter } from "./routes/competitions"
 import { healthRouter } from "./routes/health"
+import { leaguesRouter } from "./routes/leagues"
 
 /*******************************************************************************
  *
@@ -27,6 +28,7 @@ app.use(cookieParser())
 
 app.use(healthRouter)
 app.use(competitionsRouter)
+app.use(leaguesRouter)
 app.use(authRouter)
 
 /*******************************************************************************

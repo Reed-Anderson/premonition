@@ -1,4 +1,4 @@
-import type { Bet, BetOutcome, BetVolume } from "@premonition/types"
+import type { Bet, BetOutcome, BetSummary, BetVolume } from "@premonition/types"
 import { UnauthorizedError } from "./auth"
 
 /*******************************************************************************
@@ -31,30 +31,26 @@ export async function fetchMyBets(competitionId: string): Promise<Bet[]> {
     return res.json()
 }
 
-export async function fetchBetVolume(gameId: string): Promise<BetVolume> {
-    const res = await fetch(`${API_URL}/games/${gameId}/bets/volume`)
+/* All of the signed-in user's bets across every competition, enriched with game/competition context and a computed status + return. Resolves to an empty list when signed out. */
+export async function fetchAllMyBets(): Promise<BetSummary[]> {
+    const res = await fetch(`${API_URL}/bets/mine`, {
+        credentials: "include",
+    })
+    if (res.status === 401) {
+        return []
+    }
     if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`)
     }
     return res.json()
 }
 
-/*
- * Pari-mutuel estimate: winners split the whole pool in proportion to their
- * stake on the winning side. Based on volume as it currently stands, so it's
- * only an estimate for a bet not yet placed — it moves as more bets come in.
- * Null when nobody (not even the house) has bet on that outcome yet.
- */
-export function estimateMultiplier(
-    volume: BetVolume,
-    outcome: BetOutcome,
-): number | null {
-    const total = volume.home + volume.away
-    const onOutcome = volume[outcome]
-    if (onOutcome <= 0) {
-        return null
+export async function fetchBetVolume(gameId: string): Promise<BetVolume> {
+    const res = await fetch(`${API_URL}/games/${gameId}/bets/volume`)
+    if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`)
     }
-    return total / onOutcome
+    return res.json()
 }
 
 export async function placeBet(

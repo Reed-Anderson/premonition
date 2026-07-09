@@ -9,6 +9,7 @@ import { fetchCompetition, fetchMyCompetitionIds } from "@/lib/competitions"
 import { formatDate } from "@/lib/dates"
 import { fetchGames, groupGamesByWeek } from "@/lib/games"
 import GameListItem from "./game-list-item"
+import LeagueSection from "./league-section"
 import WeekSelector from "./week-selector"
 
 /*******************************************************************************
@@ -117,6 +118,7 @@ export default function CompetitionDetailsPage() {
                                         <GameListItem
                                             key={game.id}
                                             game={game}
+                                            sport={competition.sport}
                                             initialBet={betsByGameId.get(game.id)}
                                             hasJoined={hasJoined}
                                         />
@@ -124,6 +126,11 @@ export default function CompetitionDetailsPage() {
                                 </ul>
                             </div>
                         )}
+
+                        <LeagueSection
+                            competitionId={competition.id}
+                            hasJoined={hasJoined}
+                        />
                     </>
                 )}
             </main>

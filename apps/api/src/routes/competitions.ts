@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
-import type { BetVolume } from "@premonition/types"
-import { and, eq, sql } from "drizzle-orm"
+import type { BetSummary, BetVolume } from "@premonition/types"
+import { estimateMultiplier, gameOutcome, sportAllowsTie } from "@premonition/types"
+import { and, eq, inArray, sql } from "drizzle-orm"
 import express from "express"
 import { getSessionUser } from "../auth/session"
 import { db } from "../db"
@@ -111,6 +112,93 @@ competitionsRouter.get("/competitions/:id/bets/mine", async (req, res) => {
 })
 
 /**
+ * All of the signed-in user's bets across every competition, enriched with
+ * game/competition context and a computed status + return.
+ *
+ * @route GET /bets/mine
+ * @returns {BetSummary[]} 200
+ * @returns {ApiError} 401 - not signed in
+ */
+competitionsRouter.get("/bets/mine", async (req, res) => {
+    /***************************************************************************
+     * Require the user to be signed in
+     **************************************************************************/
+    const user = await getSessionUser(req)
+    if (!user) {
+        res.status(401).json({ error: "Not signed in" })
+        return
+    }
+
+    /***************************************************************************
+     * Fetch the user's bets, joined with their game and competition
+     **************************************************************************/
+    const rows = await db
+        .select({ bet: bets, game: games, competitionName: competitions.name })
+        .from(bets)
+        .innerJoin(games, eq(bets.gameId, games.id))
+        .innerJoin(competitions, eq(games.competitionId, competitions.id))
+        .where(eq(bets.userId, user.id))
+    if (rows.length === 0) {
+        res.json([])
+        return
+    }
+
+    /***************************************************************************
+     * Aggregate bet volume for every game these bets belong to
+     **************************************************************************/
+    const gameIds = [...new Set(rows.map((row) => row.game.id))]
+    const volumeRows = await db
+        .select({
+            gameId: bets.gameId,
+            outcome: bets.outcome,
+            total: sql<number>`sum(${bets.wager})`,
+        })
+        .from(bets)
+        .where(inArray(bets.gameId, gameIds))
+        .groupBy(bets.gameId, bets.outcome)
+
+    const volumeByGameId = new Map<string, BetVolume>(
+        gameIds.map((gameId) => [gameId, { home: 0, away: 0, tie: 0 }]),
+    )
+    for (const row of volumeRows) {
+        const volume = volumeByGameId.get(row.gameId)
+        if (volume) {
+            volume[row.outcome] = Number(row.total)
+        }
+    }
+
+    /***************************************************************************
+     * Enrich each bet with its status and estimated/actual return
+     **************************************************************************/
+    const summaries: BetSummary[] = rows.map(({ bet, game, competitionName }) => {
+        const actual = gameOutcome(game)
+        const status =
+            actual === null ? "pending" : actual === bet.outcome ? "won" : "lost"
+        const volume = volumeByGameId.get(game.id) ?? {
+            home: 0,
+            away: 0,
+            tie: 0,
+        }
+        const multiplier = estimateMultiplier(volume, bet.outcome)
+        const potentialReturn =
+            multiplier !== null ? Math.round(bet.wager * multiplier) : bet.wager
+
+        return {
+            id: bet.id,
+            competitionName,
+            homeTeam: game.homeTeam,
+            awayTeam: game.awayTeam,
+            outcome: bet.outcome,
+            wager: bet.wager,
+            potentialReturn,
+            status,
+            kickoff: game.kickoff.toISOString(),
+        }
+    })
+    res.json(summaries)
+})
+
+/**
  * Aggregate bet volume by outcome for a game.
  *
  * @route GET /games/:id/bets/volume
@@ -127,7 +215,7 @@ competitionsRouter.get("/games/:id/bets/volume", async (req, res) => {
         .where(eq(bets.gameId, req.params.id))
         .groupBy(bets.outcome)
 
-    const volume: BetVolume = { home: 0, away: 0 }
+    const volume: BetVolume = { home: 0, away: 0, tie: 0 }
     for (const row of rows) {
         volume[row.outcome] = Number(row.total)
     }
@@ -187,10 +275,10 @@ competitionsRouter.post("/competitions/:id/join", async (req, res) => {
  *
  * @route POST /games/:id/bets
  * @param {string} id - game id (path)
- * @param {"home"|"away"} outcome - predicted winner (body)
+ * @param {"home"|"away"|"tie"} outcome - predicted result (body)
  * @param {number} wager - credits to bet (body)
  * @returns {Bet} 201 - created bet
- * @returns {ApiError} 400 - invalid outcome or wager
+ * @returns {ApiError} 400 - invalid outcome or wager, or a tie bet on a sport that doesn't allow ties
  * @returns {ApiError} 401 - not signed in
  * @returns {ApiError} 403 - not a member of this competition
  * @returns {ApiError} 404 - game not found
@@ -211,7 +299,7 @@ competitionsRouter.post("/games/:id/bets", async (req, res) => {
      **************************************************************************/
     const { outcome, wager } = req.body
     if (
-        (outcome !== "home" && outcome !== "away") ||
+        (outcome !== "home" && outcome !== "away" && outcome !== "tie") ||
         !Number.isInteger(wager) ||
         wager <= 0
     ) {
@@ -220,11 +308,24 @@ competitionsRouter.post("/games/:id/bets", async (req, res) => {
     }
 
     /***************************************************************************
-     * Look up the game
+     * Look up the game and its competition's sport
      **************************************************************************/
-    const [game] = await db.select().from(games).where(eq(games.id, req.params.id))
-    if (!game) {
+    const [row] = await db
+        .select({ game: games, sport: competitions.sport })
+        .from(games)
+        .innerJoin(competitions, eq(games.competitionId, competitions.id))
+        .where(eq(games.id, req.params.id))
+    if (!row) {
         res.status(404).json({ error: "Game not found" })
+        return
+    }
+    const { game, sport } = row
+
+    /***************************************************************************
+     * Confirm ties are allowed for this game's sport
+     **************************************************************************/
+    if (outcome === "tie" && !sportAllowsTie(sport)) {
+        res.status(400).json({ error: "This game can't end in a tie" })
         return
     }
 

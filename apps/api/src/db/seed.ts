@@ -1,5 +1,6 @@
 import "dotenv/config"
-import type { Competition, Game } from "@premonition/types"
+import type { BetOutcome, Competition, Game } from "@premonition/types"
+import { sportAllowsTie } from "@premonition/types"
 import { db } from "./index"
 import { bets, competitions, games, users } from "./schema"
 
@@ -2813,10 +2814,15 @@ const GAMES: Game[] = [
     },
 ]
 
-/* Two house accounts hedge every game 50/50 so its volume bar never starts empty. */
+/* House accounts hedge every game's home/away, and its tie too when the sport allows one, so its volume bar (and returns) never start empty. */
 const HOUSE_HOME_USER_ID = "house-home"
 const HOUSE_AWAY_USER_ID = "house-away"
+const HOUSE_TIE_USER_ID = "house-tie"
 const HEDGE_WAGER = 50
+
+const sportByCompetitionId = new Map(
+    COMPETITIONS.map((competition) => [competition.id, competition.sport]),
+)
 
 /*******************************************************************************
  *
@@ -2854,6 +2860,12 @@ async function seed() {
                 email: "house-away@premonition.internal",
                 name: "House (Away)",
             },
+            {
+                id: HOUSE_TIE_USER_ID,
+                googleId: HOUSE_TIE_USER_ID,
+                email: "house-tie@premonition.internal",
+                name: "House (Tie)",
+            },
         ])
         .onConflictDoNothing({ target: users.id })
     console.log("Seeded house accounts")
@@ -2861,22 +2873,41 @@ async function seed() {
     await db
         .insert(bets)
         .values(
-            GAMES.flatMap((game) => [
-                {
-                    id: `${game.id}-house-home`,
-                    userId: HOUSE_HOME_USER_ID,
-                    gameId: game.id,
-                    outcome: "home" as const,
-                    wager: HEDGE_WAGER,
-                },
-                {
-                    id: `${game.id}-house-away`,
-                    userId: HOUSE_AWAY_USER_ID,
-                    gameId: game.id,
-                    outcome: "away" as const,
-                    wager: HEDGE_WAGER,
-                },
-            ]),
+            GAMES.flatMap((game) => {
+                const sport = sportByCompetitionId.get(game.competitionId)
+                const hedgeBets: {
+                    id: string
+                    userId: string
+                    gameId: string
+                    outcome: BetOutcome
+                    wager: number
+                }[] = [
+                    {
+                        id: `${game.id}-house-home`,
+                        userId: HOUSE_HOME_USER_ID,
+                        gameId: game.id,
+                        outcome: "home",
+                        wager: HEDGE_WAGER,
+                    },
+                    {
+                        id: `${game.id}-house-away`,
+                        userId: HOUSE_AWAY_USER_ID,
+                        gameId: game.id,
+                        outcome: "away",
+                        wager: HEDGE_WAGER,
+                    },
+                ]
+                if (sport && sportAllowsTie(sport)) {
+                    hedgeBets.push({
+                        id: `${game.id}-house-tie`,
+                        userId: HOUSE_TIE_USER_ID,
+                        gameId: game.id,
+                        outcome: "tie",
+                        wager: HEDGE_WAGER,
+                    })
+                }
+                return hedgeBets
+            }),
         )
         .onConflictDoNothing({ target: [bets.userId, bets.gameId] })
     console.log(`Seeded hedge bets for ${GAMES.length} games`)

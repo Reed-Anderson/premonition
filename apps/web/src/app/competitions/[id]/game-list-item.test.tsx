@@ -16,7 +16,7 @@ vi.mock("@/lib/bets", async (importOriginal) => {
     return {
         ...actual,
         placeBet: vi.fn(),
-        fetchBetVolume: vi.fn().mockResolvedValue({ home: 50, away: 50 }),
+        fetchBetVolume: vi.fn().mockResolvedValue({ home: 50, away: 50, tie: 0 }),
         BetAlreadyPlacedError: class BetAlreadyPlacedError extends Error {},
     }
 })
@@ -42,36 +42,54 @@ const placedBet: Bet = {
 }
 
 describe("GameListItem", () => {
-    it("shows a 'Bet placed' badge once a bet is submitted, even while collapsed", async () => {
+    it("shows a badge naming the picked team once a bet is submitted, even while collapsed", async () => {
         const user = userEvent.setup()
         vi.mocked(placeBet).mockResolvedValue(placedBet)
-        render(<GameListItem game={game} hasJoined={true} />)
+        render(<GameListItem game={game} sport="FOOTBALL" hasJoined={true} />)
 
         const header = screen.getByRole("button", { name: /Chiefs.*Ravens/ })
-        expect(screen.queryByText("Bet placed")).not.toBeInTheDocument()
+        expect(screen.queryByText("Bet: Chiefs")).not.toBeInTheDocument()
 
         await user.click(header)
         await user.click(screen.getByRole("button", { name: /Chiefs.*return/ }))
         await user.type(screen.getByRole("textbox"), "50")
         await user.click(screen.getByRole("button", { name: "Place Bet" }))
 
-        expect(await screen.findByText("Bet placed")).toBeInTheDocument()
+        expect(await screen.findByText("Bet: Chiefs")).toBeInTheDocument()
 
         await user.click(header)
-        expect(screen.getByText("Bet placed")).toBeInTheDocument()
+        expect(screen.getByText("Bet: Chiefs")).toBeInTheDocument()
     })
 
     it("shows the badge up front when given an initial bet", () => {
         render(
-            <GameListItem game={game} hasJoined={true} initialBet={placedBet} />,
+            <GameListItem
+                game={game}
+                sport="FOOTBALL"
+                hasJoined={true}
+                initialBet={placedBet}
+            />,
         )
 
-        expect(screen.getByText("Bet placed")).toBeInTheDocument()
+        expect(screen.getByText("Bet: Chiefs")).toBeInTheDocument()
+    })
+
+    it("shows a Tie badge when the placed bet is a tie", () => {
+        render(
+            <GameListItem
+                game={game}
+                sport="SOCCER"
+                hasJoined={true}
+                initialBet={{ ...placedBet, outcome: "tie" }}
+            />,
+        )
+
+        expect(screen.getByText("Bet: Tie")).toBeInTheDocument()
     })
 
     it("shows a join prompt instead of the form when not joined", async () => {
         const user = userEvent.setup()
-        render(<GameListItem game={game} hasJoined={false} />)
+        render(<GameListItem game={game} sport="FOOTBALL" hasJoined={false} />)
 
         await user.click(screen.getByRole("button", { name: /Chiefs.*Ravens/ }))
 

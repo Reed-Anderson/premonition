@@ -11,13 +11,18 @@ type BetVolumeBarProps = {
     volume: BetVolume
     homeTeam: string
     awayTeam: string
+    allowsTie: boolean
 }
 
 export default function BetVolumeBar(props: BetVolumeBarProps) {
-    const total = props.volume.home + props.volume.away
+    const total =
+        props.volume.home +
+        props.volume.away +
+        (props.allowsTie ? props.volume.tie : 0)
     const share = getBetVolumeShare(props.volume)
     const homePercent = Math.round(share.home * 100)
-    const awayPercent = total > 0 ? 100 - homePercent : 0
+    const tiePercent = props.allowsTie ? Math.round(share.tie * 100) : 0
+    const awayPercent = Math.round(share.away * 100)
 
     return (
         <div className="flex flex-col gap-1">
@@ -26,7 +31,7 @@ export default function BetVolumeBar(props: BetVolumeBarProps) {
                 role="img"
                 aria-label={
                     total > 0
-                        ? `Betting volume: ${homePercent}% on ${props.homeTeam}, ${awayPercent}% on ${props.awayTeam}`
+                        ? `Betting volume: ${homePercent}% on ${props.homeTeam}${props.allowsTie ? `, ${tiePercent}% on a tie` : ""}, ${awayPercent}% on ${props.awayTeam}`
                         : "No bets placed yet"
                 }
             >
@@ -36,6 +41,12 @@ export default function BetVolumeBar(props: BetVolumeBarProps) {
                             className="h-full bg-primary-600 transition-[flex-grow] duration-500 ease-out dark:bg-primary-500"
                             style={{ flexGrow: props.volume.home }}
                         />
+                        {props.allowsTie && (
+                            <div
+                                className="h-full bg-zinc-400 transition-[flex-grow] duration-500 ease-out dark:bg-zinc-600"
+                                style={{ flexGrow: props.volume.tie }}
+                            />
+                        )}
                         <div
                             className="h-full bg-secondary-600 transition-[flex-grow] duration-500 ease-out"
                             style={{ flexGrow: props.volume.away }}
@@ -50,6 +61,9 @@ export default function BetVolumeBar(props: BetVolumeBarProps) {
                         {props.volume.home.toLocaleString()} credits on{" "}
                         {props.homeTeam}
                     </span>
+                    {props.allowsTie && (
+                        <span>{props.volume.tie.toLocaleString()} credits on Tie</span>
+                    )}
                     <span>
                         {props.volume.away.toLocaleString()} credits on{" "}
                         {props.awayTeam}

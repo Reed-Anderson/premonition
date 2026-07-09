@@ -1,5 +1,5 @@
+import type { BetStatus } from "@premonition/types"
 import BetFilterItem from "./bet-filter-item"
-import type { BetStatus } from "./bet-list-item"
 
 /*******************************************************************************
  *

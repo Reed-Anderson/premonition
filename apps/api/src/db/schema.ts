@@ -79,7 +79,38 @@ export const competitionMembers = pgTable(
     (table) => [primaryKey({ columns: [table.userId, table.competitionId] })],
 )
 
-export const betOutcomeEnum = pgEnum("bet_outcome", ["home", "away"])
+export const leagues = pgTable("leagues", {
+    id: text("id").primaryKey(),
+    competitionId: text("competition_id")
+        .notNull()
+        .references(() => competitions.id),
+    name: text("name").notNull(),
+    ownerId: text("owner_id")
+        .notNull()
+        .references(() => users.id),
+    inviteCode: text("invite_code").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .notNull()
+        .defaultNow(),
+})
+
+export const leagueMembers = pgTable(
+    "league_members",
+    {
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id),
+        leagueId: text("league_id")
+            .notNull()
+            .references(() => leagues.id),
+        joinedAt: timestamp("joined_at", { withTimezone: true })
+            .notNull()
+            .defaultNow(),
+    },
+    (table) => [primaryKey({ columns: [table.userId, table.leagueId] })],
+)
+
+export const betOutcomeEnum = pgEnum("bet_outcome", ["home", "away", "tie"])
 
 export const bets = pgTable(
     "bets",

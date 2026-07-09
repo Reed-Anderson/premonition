@@ -33,7 +33,7 @@ vi.mock("@/lib/bets", async (importOriginal) => {
     return {
         ...actual,
         fetchMyBets: vi.fn(),
-        fetchBetVolume: vi.fn().mockResolvedValue({ home: 0, away: 0 }),
+        fetchBetVolume: vi.fn().mockResolvedValue({ home: 0, away: 0, tie: 0 }),
     }
 })
 
@@ -94,7 +94,7 @@ describe("CompetitionDetailsPage", () => {
                 screen.getByRole("button", { name: /Chiefs.*Ravens/ }),
             ).toBeInTheDocument()
         })
-        expect(screen.getByText("Bet placed")).toBeInTheDocument()
+        expect(screen.getByText("Bet: Chiefs")).toBeInTheDocument()
     })
 
     it("shows a bettable game as unlocked when the user has no bet yet", async () => {
@@ -110,7 +110,7 @@ describe("CompetitionDetailsPage", () => {
                 screen.getByRole("button", { name: /Chiefs.*Ravens/ }),
             ).toBeInTheDocument()
         })
-        expect(screen.queryByText("Bet placed")).not.toBeInTheDocument()
+        expect(screen.queryByText("Bet: Chiefs")).not.toBeInTheDocument()
     })
 
     it("shows a join prompt instead of a bet form when the user hasn't joined", async () => {

@@ -1,6 +1,6 @@
 "use client"
 
-import type { Bet, Game } from "@premonition/types"
+import type { Bet, Game, Sport } from "@premonition/types"
 import { useState } from "react"
 import GameBetForm from "./game-bet-form"
 
@@ -12,15 +12,30 @@ import GameBetForm from "./game-bet-form"
 
 type GameListItemProps = {
     game: Game
+    sport: Sport
     initialBet?: Bet
     hasJoined: boolean
 }
 
 export default function GameListItem(props: GameListItemProps) {
+    /***************************************************************************
+     * State
+     **************************************************************************/
+
     const [isExpanded, setIsExpanded] = useState(false)
     const [placedBet, setPlacedBet] = useState<Bet | null>(
         props.initialBet ?? null,
     )
+
+    /***************************************************************************
+     * Render Variables
+     **************************************************************************/
+
+    const pickedLabel = placedBet && pickedLabelFor(placedBet, props.game)
+
+    /***************************************************************************
+     * Render
+     **************************************************************************/
 
     return (
         <li className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -32,15 +47,19 @@ export default function GameListItem(props: GameListItemProps) {
             >
                 <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-black dark:text-zinc-50">
-                        {props.game.homeTeam}{" "}
+                        <span className={outcomeClassName(placedBet?.outcome, "home")}>
+                            {props.game.homeTeam}
+                        </span>{" "}
                         <span className="text-zinc-400 dark:text-zinc-600">
                             vs
                         </span>{" "}
-                        {props.game.awayTeam}
+                        <span className={outcomeClassName(placedBet?.outcome, "away")}>
+                            {props.game.awayTeam}
+                        </span>
                     </p>
-                    {placedBet && (
+                    {pickedLabel && (
                         <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-950 dark:text-primary-300">
-                            Bet placed
+                            Bet: {pickedLabel}
                         </span>
                     )}
                 </div>
@@ -70,6 +89,7 @@ export default function GameListItem(props: GameListItemProps) {
                     <div className="px-4 pb-4">
                         <GameBetForm
                             game={props.game}
+                            sport={props.sport}
                             initialBet={props.initialBet}
                             hasJoined={props.hasJoined}
                             onPlaceBet={setPlacedBet}
@@ -88,4 +108,26 @@ function formatKickoff(kickoff: string) {
         hour: "numeric",
         minute: "2-digit",
     })
+}
+
+function pickedLabelFor(bet: Bet, game: Game) {
+    switch (bet.outcome) {
+        case "home":
+            return game.homeTeam
+        case "away":
+            return game.awayTeam
+        case "tie":
+            return "Tie"
+    }
+}
+
+/* A tie pick highlights both teams in secondary color; a home/away pick highlights just that side in primary color. */
+function outcomeClassName(outcome: Bet["outcome"] | undefined, side: "home" | "away") {
+    if (outcome === "tie") {
+        return "text-secondary-700 dark:text-secondary-400"
+    }
+    if (outcome === side) {
+        return "text-primary-700 dark:text-primary-400"
+    }
+    return undefined
 }

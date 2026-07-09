@@ -1,0 +1,1 @@
+ALTER TYPE "public"."bet_outcome" ADD VALUE 'tie';
